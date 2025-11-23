@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Event Check-in</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .box {
+      background: #ffffff;
+      padding: 20px 24px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      max-width: 400px;
+      width: 100%;
+    }
+    h1 {
+      font-size: 20px;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    p {
+      font-size: 13px;
+      color: #4b5563;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    button {
+      width: 100%;
+      padding: 9px;
+      border-radius: 999px;
+      border: none;
+      background: #1d4ed8;
+      color: white;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1e40af;
+    }
+    .msg {
+      margin-top: 10px;
+      font-size: 13px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Event Attendance</h1>
+    <p id="eventInfo">Mark your attendance for this event.</p>
+
+    <form id="checkinForm">
+      <label for="email">Enter your registered email *</label>
+      <input type="email" id="email" required placeholder="you@example.com">
+
+      <button type="submit">Mark Attendance</button>
+    </form>
+
+    <div id="message" class="msg"></div>
+  </div>
+
+  <script>
+    const API_BASE = '/api';
+
+    function getEventIdFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('eventId');
+    }
+
+    const eventId = getEventIdFromUrl();
+
+    if (!eventId) {
+      document.getElementById('eventInfo').textContent =
+        'Invalid link: event ID is missing.';
+      document.getElementById('checkinForm').style.display = 'none';
+    } else {
+      document.getElementById('eventInfo').textContent =
+        'Please enter your registered email to mark attendance for Event ID ' + eventId + '.';
+    }
+
+    document.getElementById('checkinForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const msgEl = document.getElementById('message');
+
+      if (!email) {
+        msgEl.textContent = 'Email is required.';
+        msgEl.style.color = 'red';
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/events/${eventId}/checkin`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ student_email: email })
+        });
+
+        const data = await res.json();
+        msgEl.textContent = data.message || 'Done';
+        msgEl.style.color = res.ok ? 'green' : 'red';
+      } catch (err) {
+        console.error(err);
+        msgEl.textContent = 'Error marking attendance.';
+        msgEl.style.color = 'red';
+      }
+    });
+  </script>
+</body>
+</html>
